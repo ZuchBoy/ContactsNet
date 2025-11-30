@@ -1,0 +1,113 @@
+﻿using Contacts.Interfaces;
+using Contacts.Models;
+using Microsoft.EntityFrameworkCore;
+
+namespace Contacts.Services
+{
+    public class ContactService : IContactService
+    {
+        private readonly ContactContext _dbContext;
+
+        public ContactService(ContactContext contactContext)
+        {
+            _dbContext = contactContext;
+        }
+
+        //public async Task<bool> Create(RegisterModel contact)
+        //{
+        //    Contact newContact = new Contact
+        //    {
+        //        Id = Guid.NewGuid(),
+        //        FirstName = contact.FirstName,
+        //        Surname = contact.Surname,
+        //        Email = contact.Email,
+        //        Category = new Category { Name = contact.Category },
+        //        };
+
+        //    User newUser = new User
+        //    {
+        //        Id = Guid.NewGuid(),
+        //        ContactId = newContact.Id,
+        //        Username = contact.Email,
+        //        PwdHash = contact.Password 
+        //    };
+
+        //    _dbContext.Contacts.Add(newContact);
+        //    _dbContext.Users.Add(newUser);
+        //    if (await _dbContext.SaveChangesAsync() > 0)
+        //        return true;
+        //    else
+        //        return false;
+        //}
+
+        public async Task<bool> Delete(Guid id)
+        {
+            var c = await _dbContext.Contacts.FirstAsync(c => c.Id == id);
+            if (c != null)
+            {
+                _dbContext.Contacts.Remove(c);
+				await _dbContext.SaveChangesAsync();
+				return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+        public async Task<Contact> Get(Guid id)
+        {
+            return await _dbContext.Contacts.FirstAsync(c => c.Id == id);
+        }
+
+        public async Task<IEnumerable<ContactDTO>> GetAll()
+        {   var first = _dbContext.Contacts.FirstOrDefault();
+            var test = new ContactDTO(
+                first.Id,
+                first.FirstName,
+                first.Surname,
+                first.Email,
+                first.Phone,
+                first.BirthDate.HasValue ? first.BirthDate.Value.ToString("yyyy-MM-dd") : string.Empty,
+                first.CategoryId,
+                first.SubcategoryId
+            );
+
+
+			var contacts = await _dbContext.Contacts.Select(c => new ContactDTO(
+				c.Id,
+				c.FirstName,
+				c.Surname,
+				c.Email,
+				c.Phone,
+				c.BirthDate.HasValue ? c.BirthDate.Value.ToString("yyyy-MM-dd") : string.Empty,
+				c.CategoryId,
+				c.SubcategoryId
+			)).ToListAsync();
+            
+            return contacts;
+        }
+
+        public async Task<bool> Update(Guid contactId, ContactDTO contact)
+        {
+            var c = await _dbContext.Contacts.FirstAsync(c => c.Id == contactId);
+            if (c != null) {
+                c.FirstName = contact.FirstName;
+                c.Surname = contact.Surname;
+                c.Email = contact.Email;
+                c.Phone = contact.Phone;
+                if (DateOnly.TryParse(contact.DateOfBirth, out var dob)) {
+                    c.BirthDate = dob;
+                } else {
+                    c.BirthDate = null;
+				}
+                c.CategoryId = contact.CategoryId;
+                c.SubcategoryId = contact.SubcategoryId;
+                _dbContext.Entry(c).State = EntityState.Modified;
+                await _dbContext.SaveChangesAsync();
+                return true;
+            } else {
+                return false;
+            }
+        }
+    }
+}

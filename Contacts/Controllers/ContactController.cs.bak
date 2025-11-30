@@ -1,0 +1,65 @@
+﻿using Contacts.Interfaces;
+using Contacts.Models;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+
+namespace Contacts.Controllers
+{
+    [ApiController]
+    [Route("[controller]")]
+    public class ContactController : ControllerBase
+    {
+        private readonly IContactService _contactService;
+
+        public ContactController(IContactService contactService)
+        {
+            _contactService = contactService;
+        }
+
+        [HttpGet]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetAll()
+        {
+            return Ok(await _contactService.GetAll());
+        }
+
+        [HttpGet("{id}")]
+        [AllowAnonymous]
+        public async Task<IActionResult> Get(Guid id)
+        {
+            var test = Request.Headers.Authorization.ToString();
+            var contact = await _contactService.Get(id);
+            if (contact == null) {
+                return NotFound();
+            }
+
+            return Ok(contact);
+        }
+
+        [HttpPut("{id}")]
+        [Authorize]
+        public async Task<IActionResult> Update(Guid id, [FromBody] ContactDTO contact)
+        {
+			// obsłużyć NotModified
+			return await _contactService.Update(id, contact) ? NoContent() : NotFound();
+        }
+
+        [HttpDelete("{id}")]
+        [Authorize]
+        public async Task<IActionResult> Delete(Guid id)
+        {
+            return await _contactService.Delete(id) ? NoContent() : NotFound();
+        }
+
+        [HttpGet("debug/token")]
+        [AllowAnonymous]
+        public IActionResult DebugToken()
+        {
+            return Ok(new
+            {
+                AuthHeader = Request.Headers.Authorization.ToString()
+            });
+        }
+
+    }
+}

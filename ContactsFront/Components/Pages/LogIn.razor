@@ -1,0 +1,51 @@
+﻿@page "/login"
+@page "/logout"
+@using ContactsFront.Api
+@using ContactsFront.Models
+@using ContactsFront.Services
+@inject AuthService AuthService
+@inject NavigationManager NavManager
+
+<h3>Log in</h3>
+
+<EditForm Model="loginModel" OnValidSubmit="HandleLogin">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <p style="color:red">@errorMessage</p>
+    }
+
+    <div>
+        <label>Login:</label>
+        <InputText @bind-Value="loginModel.Username" />
+    </div>
+    <div>
+        <label>Password:</label>
+        <InputText type="password" @bind-Value="loginModel.Password" />
+    </div>
+    <button type="submit">Log in</button>
+</EditForm>
+
+@code {
+    private LoginModel loginModel = new();
+    private string errorMessage;
+
+    private async Task HandleLogin()
+    {
+        try
+        {
+            var success = await AuthService.LoginAsync(loginModel);
+            if (success)
+                NavManager.NavigateTo("/contacts");
+            else
+                errorMessage = "Invalid login or password.";
+        }
+        catch (Exception)
+        {
+            errorMessage = "Something went wrong.";
+
+        }
+    }
+}

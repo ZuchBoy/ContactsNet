@@ -1,0 +1,140 @@
+﻿@page "/contacts/edit/{Id}"
+@using ContactsFront.Api
+@using System.Text.RegularExpressions
+@using ContactsFront.Services
+@inject ContactsApiClient Api
+@inject CategoryService category
+@inject NavigationManager NavManager
+
+<h3>Edit contact:</h3>
+
+@if (!string.IsNullOrEmpty(errorMessage)) {
+    <p style="color:red">@errorMessage</p>
+}
+
+<EditForm Model="contact" OnValidSubmit="HandleSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div>
+        <label>Name:</label>
+        <InputText @bind-Value="contact.FirstName" />
+    </div>
+    <div>
+        <label>Surname:</label>
+        <InputText @bind-Value="contact.Surname" />
+    </div>
+    <div>
+        <label>Email:</label>
+        <InputText @bind-Value="contact.Email" />
+    </div>
+    <div>
+        @if (contact.CategoryId != null) {
+        <label>Category:</label>
+        <InputSelect @bind-Value="contact.CategoryId" @onclick="OnCategoryChanged">
+            @foreach (var cat in categories)
+            {
+                <option value="@cat.Id">@cat.Name</option>
+            }
+        </InputSelect>
+        }
+    </div>
+    @if (contact.CategoryId != null){
+        @if (selectedCategory.HasManySub)
+        {
+            <label>Subcategory:</label>
+            <InputSelect @bind-Value="selectedSubcategory.Name">
+                @foreach (var sub in subcategories) {
+                    <option value="@sub.Name">@sub.Name</option>
+                }
+            </InputSelect>
+        }
+
+        @if(selectedCategory.IsCustom)
+        {
+            <div>
+                <label>Subcategory:</label>
+                <InputText @bind-Value="selectedSubcategory.Name" />
+            </div>
+        }
+    }
+    <div>
+        <label>Phone:</label>
+        <InputText @bind-Value="contact.Phone" />
+    </div>
+    <div>
+        <label>Date of birth:</label>
+        <InputDate @bind-Value="contact.BirthDate" />
+    </div>
+
+    <button type="submit">Save</button>
+    <button type="reset" @onclick="() => NavManager.NavigateTo(BackUrl)">Back</button>
+</EditForm>
+
+@code {
+    [Parameter]
+    public string Id { get; set; }
+    private Contact contact = new();
+    private Category selectedCategory = new();
+    private Subcategory selectedSubcategory = new();
+    private List<Category> categories = new();
+    private List<Subcategory> subcategories = new();
+    private string BackUrl => "/contactlist";
+    private string errorMessage = string.Empty; 
+
+    protected override async Task OnInitializedAsync()
+    {
+        contact = await Api.GetContactAsync(Guid.Parse(Id));
+        categories = await category.GetCategoriesAsync();
+        selectedCategory = categories.FirstOrDefault(c => c.Id == contact.CategoryId);
+        if(contact.SubcategoryId.HasValue){
+            selectedSubcategory = await category.GetSubcategoryById(contact.SubcategoryId.Value);
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        errorMessage = string.Empty;
+        if (!IsValidEmail(contact.Email)) {
+            errorMessage = "Incorrect format of email address!";
+            return;
+        }
+
+        var repsonse = await Api.UpdateContactAsync(Guid.Parse(Id), contact, selectedSubcategory.Name);
+        if (repsonse.StatusCode == System.Net.HttpStatusCode.NotModified){
+            errorMessage = "Nothing to update!";
+            return;
+        }
+
+        if(!repsonse.IsSuccessStatusCode){
+            errorMessage = "Something went wrong!";
+            return;
+        }
+
+        NavManager.NavigateTo("/contacts");
+    }
+
+    private bool IsValidEmail(string email) {
+        string emailPattern = @"^[^@\s]+@[^@\s]+\.[^@\s]+$";
+        Regex regex = new Regex(emailPattern, RegexOptions.IgnoreCase);
+        return regex.IsMatch(email);
+    }
+
+    private async Task OnCategoryChanged()
+    {
+        if(contact.CategoryId == 0)
+        {
+            contact.Subcategory = null;
+            selectedCategory = null;
+            return;
+        }
+
+        selectedCategory = categories.FirstOrDefault(c => c.Id == contact.CategoryId);
+
+        if (selectedCategory.HasManySub)
+        {
+            subcategories = await category.GetSubcategoriesAsync(contact.CategoryId);
+        }
+    }
+}
+

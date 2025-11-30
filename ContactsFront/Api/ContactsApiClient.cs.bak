@@ -1,0 +1,123 @@
+﻿using ContactsFront.Services;
+
+namespace ContactsFront.Api;
+
+public class ContactsApiClient
+{
+    private readonly HttpClient _http;
+    private readonly AuthService _auth;
+
+    public ContactsApiClient(HttpClient http, AuthService authService)
+    {
+        _http = http;
+        _auth = authService;
+	}
+
+    public async Task<bool> SetBearerToken() {
+        try {
+            string token = await _auth.GetTokenSafeAsync();
+
+            _http.DefaultRequestHeaders.Authorization =
+                new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+            return true;
+        } catch {
+            return false;
+        }
+    }
+
+    // GET /Contact
+    public async Task<List<Contact>?> GetContactsAsync()
+    {
+        return await _http.GetFromJsonAsync<List<Contact>>("/Contact");
+    }
+
+    // GET /Contact/{id}
+    public async Task<Contact?> GetContactAsync(Guid id)
+    {
+        await SetBearerToken();
+        return await _http.GetFromJsonAsync<Contact>($"/Contact/{id}");
+    }
+
+    // PUT /Contact/{id}
+    public async Task<HttpResponseMessage> UpdateContactAsync(Guid id, Contact contact)
+    {
+		await SetBearerToken();
+
+        ContactDTO contactDTO = new ContactDTO(
+            contact.Id,
+            contact.FirstName ?? "",
+            contact.Surname ?? "",
+            contact.Email ?? "",
+            contact.Phone,
+            contact.BirthDate.HasValue ? contact.BirthDate.Value.ToString("yyyy-MM-dd") : "",
+            contact.CategoryId,
+            contact.SubcategoryId
+        );
+
+		return await _http.PutAsJsonAsync($"/Contact/{id}", contactDTO);
+		//return await _http.PutAsJsonAsync($"/Contact/{id}", contact);
+	}
+
+    // DELETE /Contact/{id}
+    public async Task<HttpResponseMessage> DeleteContactAsync(Guid id)
+    {
+		await SetBearerToken();
+		return await _http.DeleteAsync($"/Contact/{id}");
+    }
+}
+
+public class Category
+{
+    public int Id { get; set; }
+    public string? Name { get; set; }
+    public string? RowVersion { get; set; }
+    public List<Contact>? Contacts { get; set; }
+    public List<Subcategory>? Subcategories { get; set; }
+}
+
+public class Subcategory
+{
+    public int Id { get; set; }
+    public int CategoryId { get; set; }
+    public string? Name { get; set; }
+    public string? RowVersion { get; set; }
+    public Category? Category { get; set; }
+    public List<Contact>? Contacts { get; set; }
+}
+
+public class User
+{
+    public Guid Id { get; set; }
+    public Guid ContactId { get; set; }
+    public string? Username { get; set; }
+    public string? PwdHash { get; set; }
+    public string? RowVersion { get; set; }
+    public Contact? Contact { get; set; }
+}
+
+public class Contact
+{
+    public Guid Id { get; set; }
+    public string? FirstName { get; set; }
+    public string? Surname { get; set; }
+    public string? Email { get; set; }
+    public string? Phone { get; set; }
+    public DateOnly? BirthDate { get; set; }
+    public int CategoryId { get; set; }
+    public int? SubcategoryId { get; set; }
+    public string? RowVersion { get; set; }
+
+    public Category? Category { get; set; }
+    public Subcategory? Subcategory { get; set; }
+    public List<User>? Users { get; set; }
+}
+
+public class RegisterModel {
+    public string FirstName { get; set; }
+    public string Surname { get; set; }
+    public string Email { get; set; }
+    public string Password { get; set; }
+    public int CategoryId { get; set; }
+}
+
+public record ContactDTO(Guid Id, string FirstName, string Surname, string Email, string? Phone, string DateOfBirth, int CategoryId, int? SubcategoryId);

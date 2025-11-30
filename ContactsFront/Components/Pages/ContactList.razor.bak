@@ -1,0 +1,67 @@
+﻿@page "/contacts"
+@page "/contactlist"
+@using ContactsFront.Api
+@inject ContactsApiClient Api
+@inject NavigationManager NavManager
+
+<h3>Contact list:</h3>
+
+<button @onclick="CreateContact">Create new contact</button>
+
+@if (contacts == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Surname</th>
+                <th>Email</th>
+                <th>Category</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var c in contacts)
+            {
+                <tr>
+                    <td>@c.FirstName</td>
+                    <td>@c.Surname</td>
+                    <td>@c.Email</td>
+                    <td>@c.CategoryId</td>
+                    <td>
+                        <button @onclick="@(() => EditContact(c.Id))">Edytuj</button>
+                        <button @onclick="@(() => DeleteContact(c.Id))">Usuń</button>
+                        <button @onclick="@(() => ViewDetails(c.Id))">Szczegóły</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<ContactDTO>? contacts;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            contacts = await Api.GetContactsAsync();
+            StateHasChanged();
+        }
+    }
+
+    private void CreateContact() => NavManager.NavigateTo("/contacts/register");
+    private void EditContact(Guid id) => NavManager.NavigateTo($"/contacts/edit/{id}");
+    private void ViewDetails(Guid id) => NavManager.NavigateTo($"/contacts/{id}");
+    private async Task DeleteContact(Guid id)
+    {
+        await Api.DeleteContactAsync(id);
+        contacts = await Api.GetContactsAsync();
+        StateHasChanged();
+    }
+}

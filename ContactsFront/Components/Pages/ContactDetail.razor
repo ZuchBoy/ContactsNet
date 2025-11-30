@@ -1,0 +1,60 @@
+﻿@page "/contacts/{Id}"
+@using ContactsFront.Api
+@using ContactsFront.Services
+@inject ContactsApiClient Api
+@inject CategoryService CategoryService
+@inject NavigationManager NavManager
+@using Microsoft.AspNetCore.Components.Authorization
+
+<h3>Contact summary</h3>
+
+@if (contact == null)
+{
+    <p>Loading...</p>
+}
+else
+{    <CascadingAuthenticationState>
+    <ul>
+        <li>Firstname: @contact.FirstName</li>
+        <li>Surname: @contact.Surname</li>
+        <li>Email: @contact.Email</li>
+        <li>Category: @category.Name</li>
+
+    @if (subcategory != null){
+        <li>Subcategory: @subcategory.Name</li>
+    }
+        <li>Phone: @contact.Phone</li>
+        <li>Date of birth: @contact.BirthDate?.ToShortDateString()</li>
+    </ul>
+    <AuthorizeView>
+        <Authorized>
+            <button @onclick="() => NavManager.NavigateTo(EditUrl)">Edit</button>
+        </Authorized>
+    </AuthorizeView>
+    <button @onclick="() => NavManager.NavigateTo(BackUrl)">Back</button>
+     </CascadingAuthenticationState>
+}
+
+@code {
+    [Parameter] 
+    public string Id { get; set; }
+    private Guid ContactId => Guid.Parse(Id);
+
+    private string EditUrl => $"/contacts/edit/{Id}";
+    private string BackUrl => "/contactlist";
+
+    private Contact contact;
+    private Category category;
+    private Subcategory subcategory = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        contact = await Api.GetContactAsync(ContactId);
+        category = await CategoryService.GetCategoryByIdAsync(contact.CategoryId);
+        if (contact.SubcategoryId.HasValue)
+        {
+            subcategory = await CategoryService.GetSubcategoryById(contact.SubcategoryId.Value);
+        }
+    }
+}
+

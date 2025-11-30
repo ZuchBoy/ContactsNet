@@ -1,0 +1,83 @@
+﻿@page "/contacts"
+@page "/contactlist"
+@using ContactsFront.Api
+@inject ContactsApiClient Api
+@inject CategoryService Cat
+@inject NavigationManager NavManager
+@inject IJSRuntime JsRuntime
+@using ContactsFront.Services
+@using Microsoft.AspNetCore.Components.Authorization
+
+<h3>Contact list:</h3>
+
+<button @onclick="CreateContact">Create new contact</button>
+
+@if (contacts == null)
+{
+    <p>Loading...</p>
+} else {
+
+    <CascadingAuthenticationState>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Surname</th>
+                <th>Email</th>
+                <th>Category</th>
+                 <AuthorizeView>
+                    <Authorized>
+                        <th>Actions</th>
+                    </Authorized>
+                 </AuthorizeView>
+            </tr>
+        </thead>
+        <tbody>
+            
+            @foreach (var c in contacts)
+            {
+                <tr>
+                    <td>@c.FirstName</td>
+                    <td>@c.Surname</td>
+                    <td>@c.Email</td>
+                    <td>@categories.Where(r => r.Id == c.CategoryId).FirstOrDefault().Name</td>
+                    <td>
+                        <button @onclick="@(() => ViewDetails(c.Id))">Details</button>
+                        <AuthorizeView>
+                            <Authorized>
+                                <button @onclick="@(() => EditContact(c.Id))">Edit</button>
+                                <button @onclick="@(() => DeleteContact(c.Id))">Remove</button>                                
+                            </Authorized>
+                        </AuthorizeView>
+                    </td>
+                </tr>
+            }           
+        </tbody>
+    </table>
+    </CascadingAuthenticationState>
+}
+
+@code {
+    private List<Contact>? contacts;
+    private List<Category>? categories;
+
+    protected override async Task OnInitializedAsync() {
+        contacts = await Api.GetContactsAsync();
+        categories = await Cat.GetCategoriesAsync();
+        StateHasChanged();
+
+    }
+
+    private void CreateContact() => NavManager.NavigateTo("/register");
+    private void EditContact(Guid id) => NavManager.NavigateTo($"/contacts/edit/{id}");
+    private void ViewDetails(Guid id) => NavManager.NavigateTo($"/contacts/{id}");
+    private async Task DeleteContact(Guid id)
+    {
+        bool confirmed = await JsRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to delete this contact?");
+        if (!confirmed) return;
+
+        await Api.DeleteContactAsync(id);
+        contacts = await Api.GetContactsAsync();
+        StateHasChanged();
+    }
+}
