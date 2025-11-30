@@ -1,30 +1,30 @@
 Proszę napisz prostą aplikację (stronę Web) obsługującą listę kontaktów.
 Funkcjonalności:
-1. Logowanie:
+## Logowanie:
 Funkcjonalność z pkt. 2 dostępna jest dla niezalogowanego użytkownika, pozostałe wymagają zalogowania.
-2. Przeglądanie listy kontaktów:
+## Przeglądanie listy kontaktów:
 Lista powinna zawierać dane podstawowe. Po wybraniu konkretnego kontaktu wyświetlane są jego
 szczegóły.
-3. Szczegóły kontaktu:
+## Szczegóły kontaktu:
 Zalogowany użytkownik może edytować i usuwać istniejące wpisy oraz dodawać nowe. Pojedynczy kontakt
 powinien mieć przynajmniej:
-• imię,
-• nazwisko,
-• email – unikalny,
-• hasło – powinno spełniać podstawowe standardy złożoności hasła,
-• kategoria (służbowy, prywatny, inny),
-• w przypadku wybrania opcji „służbowy” powinna być możliwość wybrania podkategorii ze słownika (np.
+- imię,
+- nazwisko,
+- email – unikalny,
+- hasło – powinno spełniać podstawowe standardy złożoności hasła,
+- kategoria (służbowy, prywatny, inny),
+- w przypadku wybrania opcji „służbowy” powinna być możliwość wybrania podkategorii ze słownika (np.
 szef, klient, itp.), a w przypadku opcji „inny” możliwość wpisania dowolnej podkategorii,
-• telefon,
-• data urodzenia.
+- telefon,
+- data urodzenia.
 
 Założenia techniczne:
-• Aplikacja powinna być napisana w języku C# z użyciem dowolnej bazy danych.
-• Architektura aplikacji backendowej - REST API - wymagane
-• Architektura aplikacji frontendowej - Single Page Application - wymagane
-• Wszelkie dane słownikowe (kategorie, podkategorie) powinny być trzymane w bazie danych -
+- Aplikacja powinna być napisana w języku C# z użyciem dowolnej bazy danych.
+- Architektura aplikacji backendowej - **REST** **API** - wymagane
+- Architektura aplikacji frontendowej - Single Page Application - wymagane
+- Wszelkie dane słownikowe (kategorie, podkategorie) powinny być trzymane w bazie danych -
 wymagane
-• Zaleca się wykorzystanie darmowych bibliotek
-• Należy zwrócić uwagę na bezpieczeństwo aplikacji
-• Kod źródłowy powinien zawierać komentarze
-• Wygląd graficzny aplikacji jest nieistotny
+- Zaleca się wykorzystanie darmowych bibliotek
+- Należy zwrócić uwagę na bezpieczeństwo aplikacji
+- Kod źródłowy powinien zawierać komentarze
+- Wygląd graficzny aplikacji jest nieistotny
